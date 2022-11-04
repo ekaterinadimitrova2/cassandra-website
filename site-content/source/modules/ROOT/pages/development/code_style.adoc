@@ -13,7 +13,7 @@ Cassandra uses https://checkstyle.sourceforge.io/[Checkstyle] project for enforc
 You can consult the checkstyle configuration file called `checkstyle.xml` for the source code in `src` directory and `checkstyle_test.xml` for all code in `test` directory. 
 The configuration files are located in the root of the Cassandra repository. Checkstyle can be executed independently for the main source code as well as for the tests by executing `ant checkstyle` and `ant checkstyle-test` respectively.
 
-The checkstyle target is executed by default when e.g. `build` or `jar` targets are executed. There is a flag you can use for _not_ enforcing checkstyle. This is particularly handy upon development. 
+The checkstyle target is executed by default when e.g. `build` or `jar` targets are executed. There is a flag you can use for _not_ enforcing checkstyle. This is particularly handy upon development.
 For example, by default, the checkstyle target checks that your changes in Java code do not include imports which are not used. 
 However, while you develop, you do not want this check to be enforced because you are not interested in it while you develop as your code tends to be in the in-progress state. 
 You can turn whole checkstyle off by specifying `-Dno-checkstyle=true` on the command line, for example like this: `ant build -Dno-checkstyle=true`.
@@ -176,3 +176,35 @@ https://gist.github.com/jdsumsion/9ab750a05c2a567c6afc[gist for IntelliJ
 13] (this is a work in progress, still working on javadoc, ternary
 style, line continuations, etc)
 * Eclipse: (https://github.com/tjake/cassandra-style-eclipse)
+
+=== External Dependencies
+
+Dependencies to the project are sticky, and generally poorly audited. They expose the project to security flaws simply
+by being included, as well as a poorly-managed ongoing maintenance risk. They may also harm the coherency of the project’s
+codebase when introducing alternative mechanisms to existing solutions in the project. It is best to seek wider input before
+committing the project to this course of action. New dependencies should not be included without community consensus first
+being obtained via a [DISCUSS] thread on the dev@cassandra.apache.org mailing list.
+
+=== JDK Internals
+
+Some tools and libraries use reflection to access parts of the JDK that are meant for internal use only. This use of
+reflection negatively impacts the security and maintainability of the JDK. To aid migration, JDK 9 through JDK 16 allowed
+this reflection to continue, but emitted warnings about illegal reflective access. However, JDK 17 is strongly encapsulated,
+so this reflection is no longer permitted by default. Code that accesses non-public fields and methods of java.* APIs will
+throw an InaccessibleObjectException.
+
+Note that the sun.misc and sun.reflect packages are available for reflection in all JDK releases, including JDK 17.
+There are two command-line options that enable you to grant access to specific internal APIs:
+
+* --add-exports: If you need to use an internal API that has been strongly encapsulated, then use the --add-exports runtime
+option.
+You can also use --add-exports at compile time to access the internal APIs.
+* --add-opens: If you need to access non-public fields and methods of java.* APIs by reflection, then use the --add-opens
+option.
+
+See JEP 403: Strongly Encapsulate JDK Internals by Default.
+
+All these options should be used carefully, as a last resort, at our own risk, as stated by the JDK community. Thus, the
+Apache Cassandra community would like any such usage in our codebase to be carefully considered and justified in the ticket
+where it is about to be introduced. Informational email with ticket number should be sent to dev@cassandra.apache.org mailing
+klist prior commit.
